@@ -59,7 +59,7 @@ void call(int codop, int op1, int op2, int RAM[], int reg[])
 {
     if (reg[6] != 0){ //puedo poner en la pila
         reg[6]--;
-        RAM[reg[5]+reg[6]]=reg[4]+3;
+        RAM[reg[5]+reg[6]]=reg[4];
     }
     else{
         printf("Error: pila llena");
@@ -804,7 +804,7 @@ void sys(int codop, int op1, int op2, int RAM[], int reg[])
 
 void stop(int codop, int op1, int op2, int RAM[], int reg[])
 {
-    reg[4]=reg[2];
+    RAM[0]=RAM[1];
 }
 
 void diccionario()
@@ -836,10 +836,22 @@ void diccionario()
     strcpy(mnemonicos[0x29], "JNN");
     strcpy(mnemonicos[0x81], "SYS");
     strcpy(mnemonicos[0x8f], "STOP");
+    strcpy(mnemonicos[0x50], "SLEN");
+    strcpy(mnemonicos[0x51], "SMOV");
+    strcpy(mnemonicos[0x53], "SCMP");
+    strcpy(mnemonicos[0x40], "CALL");
+    strcpy(mnemonicos[0x44], "PUSH");
+    strcpy(mnemonicos[0x45], "POP");
+    strcpy(mnemonicos[0x48], "RET");
 
+    strcpy(registros[0],"PS");
+    strcpy(registros[1],"CS");
     strcpy(registros[2],"DS");
     strcpy(registros[3],"ES");
     strcpy(registros[4],"IP");
+    strcpy(registros[5],"SS");
+    strcpy(registros[6],"SP");
+    strcpy(registros[7],"BP");
     strcpy(registros[8],"AC");
     strcpy(registros[9],"CC");
     strcpy(registros[10],"AX");

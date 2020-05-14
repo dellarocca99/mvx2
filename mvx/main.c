@@ -13,8 +13,6 @@ void flag();
 void BuscaImprime(int instr, int op1, int op2);
 int main(int argc, char *argv[])
 {
-
-printf("Fede gayyyyy");
     funciones[1]=&mov;
     funciones[2]=&add;
     funciones[3]=&sub;
@@ -40,6 +38,13 @@ printf("Fede gayyyyy");
     funciones[0x27]=&jnz;
     funciones[0x28]=&jnp;
     funciones[0x29]=&jnn;
+    funciones[0x40]=&call;
+    funciones[0x44]=&push;
+    funciones[0x45]=&pop;
+    funciones[0x48]=&ret;
+    funciones[0x50]=&slen;
+    funciones[0x51]=&smov;
+    funciones[0x53]=&scmp;
     funciones[0x81]=&sys;
     funciones[0x8f]=&stop;
 
@@ -93,18 +98,25 @@ void imprimeReg(){
 
 void ejecuta()
 {
-    int instruccion, op1, op2;
+    int instruccion, op1, op2,i;
 
-    while((reg[4] >= 0) && (reg[4] < reg[2])){
-        instruccion = RAM[reg[4]];
-        op1=RAM[reg[4]+1];
-        op2=RAM[reg[4]+2];
-        if((instruccion == 143) || ((((instruccion>>16)==5)||((instruccion>>16)==6)) && (devuelveValor(instruccion&0xff, op2, RAM, reg)==0)))
-            stop(0,0,0, RAM, reg);
-        else{
-            reg[4] += 3;
-            funciones[instruccion >> 16](instruccion, op1, op2, RAM, reg);
+    while (RAM[1] < RAM[0]){
+        for(i=0;i<16;i++)
+            reg[i]=RAM[i+16*RAM[1]+2];
+        while((reg[4] >= 0) && (reg[4] < reg[2])){
+            instruccion = RAM[reg[4]];
+            op1=RAM[reg[4]+1];
+            op2=RAM[reg[4]+2];
+            if((instruccion == 143) || ((((instruccion>>16)==5)||((instruccion>>16)==6)) && (devuelveValor(instruccion&0xff, op2, RAM, reg)==0)))
+                stop(0,0,0, RAM, reg);
+            else{
+                reg[4] += 3;
+                funciones[instruccion >> 16](instruccion, op1, op2, RAM, reg);
+            }
         }
+        for(i=0;i<16;i++)
+            RAM[i+16*RAM[1]+2]=reg[i];
+        RAM[1]++;
     }
 }
 
