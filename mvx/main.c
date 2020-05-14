@@ -15,6 +15,7 @@ int main(int argc, char *argv[])
 {
 
 printf("fede gay");
+printf("fede re contra gay");
     funciones[1]=&mov;
     funciones[2]=&add;
     funciones[3]=&sub;
