@@ -4,6 +4,10 @@ cadena registros[16];
 
 void diccionario();
 void mov(int codop, int op1, int op2, int RAM[], int reg[]);
+void push(int codop, int op1, int op2, int RAM[], int reg[]);
+void pop(int codop, int op1, int op2, int RAM[], int reg[]);
+void call(int codop, int op1, int op2, int RAM[], int reg[]);
+void ret(int codop, int op1, int op2, int RAM[], int reg[]);
 void slen(int codop, int op1, int op2, int RAM[], int reg[]);
 void smov(int codop, int op1, int op2, int RAM[], int reg[]);
 void scmp(int codop, int op1, int op2, int RAM[], int reg[]);

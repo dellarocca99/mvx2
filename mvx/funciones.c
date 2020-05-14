@@ -23,6 +23,63 @@ int devuelveValor(int Top, int op, int RAM[], int reg[]){
     return op;
 }
 
+void push(int codop, int op1, int op2, int RAM[], int reg[])
+{
+    if (reg[6] != 0){ //puedo poner en la pila
+        reg[6]--;
+        RAM[reg[5]+reg[6]]=devuelveValor((codop>>4)&0xf,op1,RAM,reg);
+    }
+    else{
+        printf("Error: pila llena");
+        stop(0,0,0,RAM,reg);
+    }
+}
+
+void pop(int codop, int op1, int op2, int RAM[], int reg[])
+{
+    int segMemoria,Top1;
+    if (reg[5]+reg[6]<reg[1]+reg[0]){ // puedo sacar de la pila
+        segMemoria= op1>>28;
+        Top1=(codop>>4)&0xf;
+        if(Top1 == 1)
+            reg[op1] = RAM[reg[5]+reg[6]];
+        else if (Top1 == 2)
+            RAM[reg[segMemoria]+(op1 & 0xfffffff)] = RAM[reg[5]+reg[6]];
+        else
+            RAM[reg[segMemoria] + ((op1>>4) & 0xffffff)+ reg[op1&0xf]] = RAM[reg[5]+reg[6]];
+        reg[6]++;
+    }
+    else{
+        printf("Error: pila vacia");
+        stop(0,0,0,RAM,reg);
+    }
+}
+
+void call(int codop, int op1, int op2, int RAM[], int reg[])
+{
+    if (reg[6] != 0){ //puedo poner en la pila
+        reg[6]--;
+        RAM[reg[5]+reg[6]]=reg[4]+3;
+    }
+    else{
+        printf("Error: pila llena");
+        stop(0,0,0,RAM,reg);
+    }
+    reg[4]=devuelveValor((codop>>4)&0xf,op1,RAM,reg);
+}
+
+void ret(int codop, int op1, int op2, int RAM[], int reg[])
+{
+    if (reg[5]+reg[6]<reg[1]+reg[0]){ // puedo sacar de la pila
+        reg[4]=RAM[reg[5]+reg[6]];
+        reg[6]++;
+    }
+    else{
+        printf("Error: pila vacia");
+        stop(0,0,0,RAM,reg);
+    }
+}
+
 void slen(int codop, int op1, int op2, int RAM[], int reg[])
 {
     int codRegBase2,pos,cont=0;
