@@ -14,6 +14,7 @@ void BuscaImprime(int instr, int op1, int op2);
 int main(int argc, char *argv[])
 {
 
+printf("fede gay");
     funciones[1]=&mov;
     funciones[2]=&add;
     funciones[3]=&sub;
