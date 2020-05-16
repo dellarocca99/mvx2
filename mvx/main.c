@@ -8,9 +8,10 @@
     void (*funciones[144])(int codop, int op1, int op2, int RAM[], int reg[]);
 void cargaMemoria(int argc, char *argv[]);
 void imprimeReg();
-void ejecuta(int a,int b,int c);
-void flag();
+void ejecuta(int a,int b,int c,int d);
+void flagD();
 void flagA();
+void flagB();
 void BuscaImprime(int instr, int op1, int op2);
 void activaBooleanos(int argc,char *argv[],int cantFlag,int a,int b,int c,int d);
 int main(int argc, char *argv[])
@@ -54,18 +55,15 @@ int main(int argc, char *argv[])
     funciones[0x8f]=&stop;
 
     cargaMemoria(argc, argv);
+    diccionario();
     cantFlag=argc-RAM[0]-1;
     activaBooleanos(argc,argv,cantFlag,a,b,c,d);
     //imprimeReg();
     if (c)
         system("cls");
-    ejecuta(a,b,c);
+    ejecuta(a,b,c, d);
     if (a)
         flagA();
-    if((argc == 3) && (strcmp(argv[2], "-d") == 0)){
-        diccionario();
-        flag();
-    }
     return 0;
 }
 
@@ -154,13 +152,16 @@ void imprimeReg(){
         printf("%d\n", RAM[i]);
 }
 
-void ejecuta(int a,int b,int c)
+void ejecuta(int a,int b,int c, int d)
 {
     int instruccion, op1, op2,i;
 
     while (RAM[1] < RAM[0]){
         for(i=0;i<16;i++)
             reg[i]=RAM[i+16*RAM[1]+2];
+        reg[4]=reg[1];
+        if(d)
+            flagD();
         while((reg[4] >= 0) && (reg[4] < reg[2])){
             instruccion = RAM[reg[4]];
             op1=RAM[reg[4]+1];
@@ -169,8 +170,14 @@ void ejecuta(int a,int b,int c)
                 stop(0,0,0, RAM, reg);
             else{
                 if (instruccion == 0x81 && op1 == 0){ // SYS 0 implica breakpoint
+                   reg[4]+=3;
                     if (c)
                         system("cls");
+                    if(b){
+                        if(d)
+                            flagD();
+
+                    }
                 }
                 else{
                     reg[4] += 3;
@@ -208,24 +215,34 @@ void flagA()
     for(i=0;i<RAM[0];i++){
         printf("Proceso %d:\n",i+1);
         for(j=0;j<16;j+=4)
-            printf("%s = %d | %s = %d | %s = %d | %s = %d |\n",registros[j],RAM[i*16+2+j],registros[j+1],RAM[i*16+2+j+1],registros[j+2],RAM[i*16+2+j+2],registros[j+3],RAM[i*16+2+j+3]);
+            printf("%s = %10d | %s = %10d | %s = %10d | %s = %10d |\n",registros[j],RAM[i*16+2+j],registros[j+1],RAM[i*16+2+j+1],registros[j+2],RAM[i*16+2+j+2],registros[j+3],RAM[i*16+2+j+3]);
         printf("\n");
     }
 }
 
-void flag()
+void flagD()
 {
-    int instruccion, op1, op2, ip=0;
+    int instruccion, op1, op2, ip=reg[1], i, j;
 
     printf("\n");
-    while((ip>=0) && (ip < reg[2])){
+    while(ip < reg[2]){
         instruccion= RAM[ip];
         op1=RAM[ip+1];
         op2=RAM[ip+2];
-        printf("[%04x %04x] \t %04x %04x %04x %04x %04x %04x \t",
+        if(ip == (reg[4]))
+            printf(">[%04x %04x] \t %04x %04x %04x %04x %04x %04x \t",
+               ip>>16, ip&0x0000FFFF, instruccion>>16, instruccion&0x0000FFFF, op1>>16, op1&0x0000FFFF, (op2&0xffff0000)>>16, op2&0x0000FFFF);
+        else
+            printf(" [%04x %04x] \t %04x %04x %04x %04x %04x %04x \t",
                ip>>16, ip&0x0000FFFF, instruccion>>16, instruccion&0x0000FFFF, op1>>16, op1&0x0000FFFF, (op2&0xffff0000)>>16, op2&0x0000FFFF);
         ip+=3;
         BuscaImprime(instruccion, op1, op2);
+    }
+    printf("Registros:\n");
+    for(i=0;i<RAM[0];i++){
+        for(j=0;j<16;j+=4)
+            printf("%s = %10d | %s = %10d | %s = %10d | %s = %10d |\n",registros[j],RAM[i*16+2+j],registros[j+1],RAM[i*16+2+j+1],registros[j+2],RAM[i*16+2+j+2],registros[j+3],RAM[i*16+2+j+3]);
+        printf("\n");
     }
 }
 
@@ -262,4 +279,21 @@ void BuscaImprime(int instr, int op1, int op2)
         }
     }
     printf("\n");
+}
+
+void flagB()
+{
+    int a, b;
+    char s[10];
+   printf("[%03d] cmd: ", ((reg[4]-reg[1])/3)+1);
+   scanf("%s", s);
+
+   /*if(c == 13){
+        printf("[%04d]: %04x %04x ", a, RAM[a]>>16, RAM[a]&0xffff);
+        if(RAM[a]>=32 && RAM[a]<=126)
+            printf("%c ", RAM[a]);
+        else
+            printf(". ");
+        printf("%10d", RAM[a]);
+   }*/
 }
