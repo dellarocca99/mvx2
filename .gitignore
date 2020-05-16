@@ -1,0 +1,10 @@
+
+mvx/mvx.layout
+mvx/obj/Debug/main.o
+*.o
+mvx/obj/Debug/funciones.o
+mvx/obj/Debug/main.o
+mvx/bin/Debug/mvx.exe
+mvx/obj/Debug/funciones.o
+mvx/obj/Debug/main.o
+mvx/obj/Debug/funciones.o

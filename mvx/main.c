@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
+#include <math.h>
 #include "funciones.h"
     int reg[16];
     int RAM[8192];
@@ -176,7 +177,7 @@ void ejecuta(int a,int b,int c, int d)
                     if(b){
                         if(d)
                             flagD();
-
+                        flagB();
                     }
                 }
                 else{
@@ -283,17 +284,50 @@ void BuscaImprime(int instr, int op1, int op2)
 
 void flagB()
 {
-    int a, b;
+    int a=0, b=0, i=0,j,iant,aux,cantNum=0;
     char s[10];
-   printf("[%03d] cmd: ", ((reg[4]-reg[1])/3)+1);
-   scanf("%s", s);
+    printf("[%03d] cmd: ", ((reg[4]-reg[1])/3)+1);
+    scanf("%s", s);
+    if (s[0]){
+        while (s[i] != 32 && s[i])
+            i++;
+        for(j=i-1;j>=0;j--){
+            aux=(int)pow(10,(i-1-j));
+            a+=(s[i-1]-48)*aux;
+        }
+        cantNum++;
+        if (s[i] == 32){
+            cantNum++;
+            i++;
+            iant=i;
+            while (s[i])
+                i++;
+            for(j=i-1;j>=iant;j--){
+                aux=(int)pow(10,(i-1-j));
+                b+=(s[i-1]-48)*aux;
+            }
+        }
 
-   /*if(c == 13){
-        printf("[%04d]: %04x %04x ", a, RAM[a]>>16, RAM[a]&0xffff);
-        if(RAM[a]>=32 && RAM[a]<=126)
-            printf("%c ", RAM[a]);
-        else
-            printf(". ");
-        printf("%10d", RAM[a]);
-   }*/
+        if(cantNum == 1){
+            printf("[%04d]: %04x %04x ", a, RAM[a]>>16, RAM[a]&0xffff);
+            if(RAM[a]>=32 && RAM[a]<=126)
+                printf("%c ", RAM[a]);
+            else
+                printf(". ");
+            printf("%10d", RAM[a]);
+            printf("\n");
+        }
+        else{
+            for(i=a;i<=b;i++){
+                printf("[%04d]: %04x %04x ", i, RAM[i]>>16, RAM[i]&0xffff);
+                if(RAM[i]>=32 && RAM[i]<=126)
+                    printf("%c ", RAM[i]);
+                else
+                    printf(". ");
+                printf("%10d", RAM[i]);
+                printf("\n");
+            }
+        }
+        flagB();
+    }
 }
