@@ -9,15 +9,15 @@
     void (*funciones[144])(int codop, int op1, int op2, int RAM[], int reg[]);
 void cargaMemoria(int argc, char *argv[]);
 void imprimeReg();
-void ejecuta(int a,int b,int c,int d);
+void ejecuta(int a,int b,int c,int d,int *procEj);
 void flagD();
-void flagA();
+void flagA(int procEj);
 void flagB();
 void BuscaImprime(int instr, int op1, int op2);
 void activaBooleanos(int argc,char *argv[],int cantFlag,int *a,int *b,int *c,int *d);
 int main(int argc, char *argv[])
 {
-    int cantFlag;
+    int cantFlag,procEj=0;
     int a=0,b=0,c=0,d=0; // variables booleanas respectivas a los flags
 
     funciones[1]=&mov;
@@ -62,9 +62,9 @@ int main(int argc, char *argv[])
     //imprimeReg();
     if (c)
         system("cls");
-    ejecuta(a,b,c, d);
+    ejecuta(a,b,c, d,&procEj);
     if (a)
-        flagA();
+        flagA(procEj);
     return 0;
 }
 
@@ -154,12 +154,13 @@ void imprimeReg(){
         printf("%d\n", RAM[i]);
 }
 
-void ejecuta(int a,int b,int c, int d)
+void ejecuta(int a,int b,int c, int d,int *procEj)
 {
     int instruccion, op1, op2,i, cont=0;
     char aux;
 
     while (RAM[1] < RAM[0]){
+
         for(i=0;i<16;i++)
             reg[i]=RAM[i+16*RAM[1]+2];
         reg[4]=reg[1];
@@ -169,26 +170,24 @@ void ejecuta(int a,int b,int c, int d)
             instruccion = RAM[reg[4]];
             op1=RAM[reg[4]+1];
             op2=RAM[reg[4]+2];
-            if((instruccion == 143) || ((((instruccion>>16)==5)||((instruccion>>16)==6)) && (devuelveValor(instruccion&0xff, op2, RAM, reg)==0)))
-                stop(0,0,0, RAM, reg);
+            if (instruccion == 0x81 && op1 == 0){ // SYS 0 implica breakpoint
+               reg[4]+=3;
+                if (c)
+                    system("cls");
+                if(b){
+                    if(d)
+                        flagD();
+                    flagB();
+                }
+            }
             else{
-                if (instruccion == 0x81 && op1 == 0){ // SYS 0 implica breakpoint
-                   reg[4]+=3;
-                    if (c)
-                        system("cls");
-                    if(b){
-                        if(d)
-                            flagD();
-                        flagB();
-                    }
-                }
-                else{
-                    //printf("ip: %d\n", reg[4]);
-                    reg[4] += 3;
-                    funciones[instruccion >> 16](instruccion, op1, op2, RAM, reg);
-                    //printf("%d\n",cont++);
-                    //scanf(" %c", &aux);
-                }
+                if ((instruccion>>16)==143) //es STOP, es decir, el proceso finaliza correctamente
+                    (*procEj)++;
+                //printf("ip: %d\n", reg[4]);
+                reg[4] += 3;
+                funciones[instruccion >> 16](instruccion, op1, op2, RAM, reg);
+                //printf("%d\n",cont++);
+                //scanf(" %c", &aux);
             }
         }
         for(i=0;i<16;i++)
@@ -212,11 +211,11 @@ void activaBooleanos(int argc,char *argv[],int cantFlag,int *a,int *b,int *c,int
     }
 }
 
-void flagA()
+void flagA(int procEj)
 {
     int i,j;
     printf("Cantidad total de procesos = %d\n", RAM[0]);
-    printf("Cantidad de procesos finalizados correctamente = %d\n", RAM[1]);
+    printf("Cantidad de procesos finalizados correctamente = %d\n", procEj);
     printf("\n");
     for(i=0;i<RAM[0];i++){
         printf("Proceso %d:\n",i+1);

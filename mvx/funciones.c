@@ -327,6 +327,8 @@ void DIV(int codop, int op1, int op2, int RAM[], int reg[])
                 reg[9]= 0;
         }
     }
+    else
+        stop(0,0,0,RAM,reg);
 }
 
 void mod(int codop, int op1, int op2, int RAM[], int reg[])
@@ -359,6 +361,8 @@ void mod(int codop, int op1, int op2, int RAM[], int reg[])
                 reg[9]= 0;
         }
     }
+    else
+        stop(0,0,0,RAM,reg);
 }
 
 void cmp(int codop, int op1, int op2, int RAM[], int reg[])
@@ -900,7 +904,6 @@ void sys(int codop, int op1, int op2, int RAM[], int reg[])
 
 void stop(int codop, int op1, int op2, int RAM[], int reg[])
 {
-    RAM[0]=RAM[1];
     reg[4]=reg[2];
 }
 
