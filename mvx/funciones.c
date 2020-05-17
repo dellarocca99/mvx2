@@ -35,7 +35,7 @@ void push(int codop, int op1, int op2, int RAM[], int reg[])
         RAM[reg[5]+reg[6]]=devuelveValor((codop>>8)&0xf,op1,RAM,reg);
     }
     else{
-        printf("Error: pila llena");
+        printf("Error: pila llena\n");
         RAM[1]=RAM[0];
         stop(0,0,0,RAM,reg);
     }
@@ -60,7 +60,7 @@ void pop(int codop, int op1, int op2, int RAM[], int reg[])
         reg[6]++;
     }
     else{
-        printf("Error: pila vacia");
+        printf("Error: pila vacia\n");
         RAM[1]=RAM[0];
         stop(0,0,0,RAM,reg);
     }
@@ -75,7 +75,7 @@ void call(int codop, int op1, int op2, int RAM[], int reg[])
                                                             //SE TENDRIA POR QUE CAMBIAR EL IP
     }
     else{
-        printf("Error: pila llena");
+        printf("Error: pila llena\n");
         RAM[1]=RAM[0];
         stop(0,0,0,RAM,reg);
     }
@@ -89,7 +89,7 @@ void ret(int codop, int op1, int op2, int RAM[], int reg[])
         reg[6]++;
     }
     else{
-        printf("Error: pila vacia");
+        printf("Error: pila vacia\n");
         stop(0,0,0,RAM,reg);
         stop(0,0,0,RAM,reg);
     }
@@ -866,43 +866,16 @@ void sys(int codop, int op1, int op2, int RAM[], int reg[])
     printf("\n");
     if(valor1 == 3){
         if(ax[0]==1){
-            printf("[DS]: %04d\n", reg[2]);
-            printf("[ES]: %04d\n", reg[3]);
-            printf("[IP]: %04d\n", reg[4]);
-            printf("[AC]: %04d\n", reg[8]);
-            printf("[CC]: %04d\n", reg[9]);
-            printf("[AX]: %04d\n", reg[10]);
-            printf("[BX]: %04d\n", reg[11]);
-            printf("[CX]: %04d\n", reg[12]);
-            printf("[DX]: %04d\n", reg[13]);
-            printf("[EX]: %04d\n", reg[14]);
-            printf("[FX]: %04d\n", reg[15]);
+            for(i=0;i<16;i++)
+                printf("[%s]: %04d\n", registros[i], reg[i]);
         }
         if(ax[2]==1){
-            printf("[DS]: @%011o\n", reg[2]);
-            printf("[ES]: @%011o\n", reg[3]);
-            printf("[IP]: @%011o\n", reg[4]);
-            printf("[AC]: @%011o\n", reg[8]);
-            printf("[CC]: @%011o\n", reg[9]);
-            printf("[AX]: @%011o\n", reg[10]);
-            printf("[BX]: @%011o\n", reg[11]);
-            printf("[CX]: @%011o\n", reg[12]);
-            printf("[DX]: @%011o\n", reg[13]);
-            printf("[EX]: @%011o\n", reg[14]);
-            printf("[FX]: @%011o\n", reg[15]);
+            for(i=0;i<16;i++)
+                printf("[%s]: @%011o\n", registros[i], reg[i]);
         }
         if(ax[3]==1){
-            printf("[DS]: %c%08x\n", por, reg[2]);
-            printf("[ES]: %c%08x\n", por, reg[3]);
-            printf("[IP]: %c%08x\n", por, reg[4]);
-            printf("[AC]: %c%08x\n", por, reg[8]);
-            printf("[CC]: %c%08x\n", por, reg[9]);
-            printf("[AX]: %c%08x\n", por, reg[10]);
-            printf("[BX]: %c%08x\n", por, reg[11]);
-            printf("[CX]: %c%08x\n", por, reg[12]);
-            printf("[DX]: %c%08x\n", por, reg[13]);
-            printf("[EX]: %c%08x\n", por, reg[14]);
-            printf("[FX]: %c%08x\n", por, reg[15]);
+            for(i=0;i<16;i++)
+                printf("[%s]: %c%08x\n", registros[i], por,reg[i]);
         }
     }
 }
