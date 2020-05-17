@@ -63,7 +63,6 @@ int main(int argc, char *argv[])
     if (c)
         system("cls");
     ejecuta(a,b,c, d);
-    printf("chau");
     if (a)
         flagA();
     return 0;
@@ -116,6 +115,7 @@ void cargaMemoria(int argc, char *argv[]){
                 RAM[j*16+2+5]=RAM[(j-1)*16+2+5];
             else
                 RAM[j*16+2+5]+=RAM[j*16+2+1];
+
     }
 
     // si CS_n+PS_n>8192, no alcanza la memoria y se lanza el mensaje "memoria insuficiente"
@@ -156,7 +156,8 @@ void imprimeReg(){
 
 void ejecuta(int a,int b,int c, int d)
 {
-    int instruccion, op1, op2,i;
+    int instruccion, op1, op2,i, cont=0;
+    char aux;
 
     while (RAM[1] < RAM[0]){
         for(i=0;i<16;i++)
@@ -182,8 +183,11 @@ void ejecuta(int a,int b,int c, int d)
                     }
                 }
                 else{
+                    //printf("ip: %d\n", reg[4]);
                     reg[4] += 3;
                     funciones[instruccion >> 16](instruccion, op1, op2, RAM, reg);
+                    //printf("%d\n",cont++);
+                    //scanf(" %c", &aux);
                 }
             }
         }
@@ -243,7 +247,7 @@ void flagD()
     printf("Registros:\n");
     for(i=0;i<RAM[0];i++){
         for(j=0;j<16;j+=4)
-            printf("%s = %10d | %s = %10d | %s = %10d | %s = %10d |\n",registros[j],RAM[i*16+2+j],registros[j+1],RAM[i*16+2+j+1],registros[j+2],RAM[i*16+2+j+2],registros[j+3],RAM[i*16+2+j+3]);
+            printf("%s = %10d | %s = %10d | %s = %10d | %s = %10d |\n",registros[j],reg[j],registros[j+1],reg[j+1],registros[j+2],reg[j+2],registros[j+3],reg[j+3]);
         printf("\n");
     }
 }
@@ -254,7 +258,7 @@ void BuscaImprime(int instr, int op1, int op2)
 
     mnemo= instr>>16;
     printf("%s \t", mnemonicos[mnemo]);
-    if(mnemo != 0x8f){
+    if((mnemo != 0x8f)&&(mnemo!=0x48)){
         if(((instr>>8)&0xff)==1) // ES DE TIPO REGISTRO
             printf("%s", registros[op1]);
         else{
@@ -270,14 +274,23 @@ void BuscaImprime(int instr, int op1, int op2)
                     else
                         printf("[%s: %s+%d]", registros[segMemoria], registros[op1&0xf],(op1>>4)&0xffffff);
                 }
-                else
-                    printf("%d", op1);
+                else{
+                    if((mnemo == 0x24)||(mnemo == 0x25)||(mnemo== 0x26)||(mnemo== 0x27)||(mnemo== 0x28)||(mnemo== 0x29)||(mnemo== 0x40)||(mnemo== 0x20))
+                        printf("%d", (reg[1]+op1));
+                    else
+                        printf("%d", op1);
+                }
             }
         }
         if((mnemo!=0x33)&&(mnemo!=0x20)&&(mnemo!=0x24)&&(mnemo!=0x25)&&(mnemo!=0x26)&&(mnemo!=0x27)
-        &&(mnemo!=0x28)&&(mnemo!=0x29)&&(mnemo!=0x81)&&(mnemo!=0x50)&&(mnemo!=0x51)&&(mnemo!=0x53)){
-            if((instr&0xff)==0)
-                printf(", %d", op2);
+        &&(mnemo!=0x28)&&(mnemo!=0x29)&&(mnemo!=0x81)&&(mnemo!=0x50)&&(mnemo!=0x51)&&(mnemo!=0x53)
+           &&(mnemo!=0x40)&&(mnemo!=0x44)&&(mnemo!=0x45)){
+            if((instr&0xff)==0){
+                if((mnemo==0x21)||(mnemo==0x22)||(mnemo==0x23))
+                    printf(", %d", reg[1]+op2);
+                else
+                    printf(", %d", op2);
+            }
             else{
                 if((instr&0xff)==1)
                     printf(", %s", registros[op2]);

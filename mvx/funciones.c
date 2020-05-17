@@ -17,7 +17,7 @@ int devuelveValor(int Top, int op, int RAM[], int reg[]){
             segMemoria= op >>28;
             regInd= op & 0xf;
             valor= (op >> 4) & 0xffffff;
-            if(valor > 8192)
+            if(valor < 8192)
                 op = RAM[reg[segMemoria]+reg[regInd]+valor];
             else{
                 valor= -1*(op >> 4) & 0xffffff;
@@ -36,6 +36,7 @@ void push(int codop, int op1, int op2, int RAM[], int reg[])
     }
     else{
         printf("Error: pila llena");
+        printf("me colgue por push");
         stop(0,0,0,RAM,reg);
     }
 }
@@ -69,12 +70,16 @@ void call(int codop, int op1, int op2, int RAM[], int reg[])
     if (reg[6] != 0){ //puedo poner en la pila
         reg[6]--;
         RAM[reg[5]+reg[6]]=reg[4];
+        reg[4]=reg[1] + devuelveValor((codop>>8)&0xf,op1,RAM,reg); //LO METI ACA PORQUE SI HAY UN ERROR DE QUE LA PILA ESTE LLENA NO
+                                                            //SE TENDRIA POR QUE CAMBIAR EL IP
     }
     else{
         printf("Error: pila llena");
+        printf("me colgue por call");
         stop(0,0,0,RAM,reg);
+
     }
-    reg[4]=devuelveValor((codop>>8)&0xf,op1,RAM,reg);
+
 }
 
 void ret(int codop, int op1, int op2, int RAM[], int reg[])
@@ -361,7 +366,9 @@ void cmp(int codop, int op1, int op2, int RAM[], int reg[])
     int valor1, valor2;
 
     valor1= devuelveValor((codop>>8)&0xff, op1, RAM, reg);
+    //printf("%d\n", valor1);
     valor2= devuelveValor(codop & 0xff, op2, RAM, reg);
+    //printf("%d\n", valor2);
     if((valor1 - valor2) == 0)
         reg[9]= 1;
     else{
@@ -615,7 +622,7 @@ void jmp(int codop, int op1, int op2, int RAM[], int reg[])
     int valor1;
 
     valor1=devuelveValor((codop>>8)&0xff, op1, RAM, reg);
-    reg[4]=valor1;
+    reg[4]=reg[1] + valor1;
 }
 
 void je(int codop, int op1, int op2, int RAM[], int reg[])
@@ -626,7 +633,7 @@ void je(int codop, int op1, int op2, int RAM[], int reg[])
     valor1=devuelveValor((codop>>8)&0xff, op1, RAM, reg);
     valor2=devuelveValor(codop>>8, op2, RAM, reg);
     if(ax == valor1)
-        reg[4]=valor2;
+        reg[4]=reg[1] + valor2;
 }
 
 void jg(int codop, int op1, int op2, int RAM[], int reg[])
@@ -637,7 +644,7 @@ void jg(int codop, int op1, int op2, int RAM[], int reg[])
     valor1=devuelveValor((codop>>8)&0xff, op1, RAM, reg);
     valor2=devuelveValor(codop>>8, op2, RAM, reg);
     if(ax < valor1)
-        reg[4]=valor2;
+        reg[4]=reg[1] + valor2;
 }
 
 void jl(int codop, int op1, int op2, int RAM[], int reg[])
@@ -648,7 +655,7 @@ void jl(int codop, int op1, int op2, int RAM[], int reg[])
     valor1=devuelveValor((codop>>8)&0xff, op1, RAM, reg);
     valor2=devuelveValor(codop>>8, op2, RAM, reg);
     if(ax > valor1)
-        reg[4]=valor2;
+        reg[4]=reg[1] + valor2;
 }
 
 void jz(int codop, int op1, int op2, int RAM[], int reg[])
@@ -657,7 +664,7 @@ void jz(int codop, int op1, int op2, int RAM[], int reg[])
 
     valor1=devuelveValor((codop>>8)&0xff, op1, RAM, reg);
     if(abs(reg[9]&0x1)==1)
-        reg[4]=valor1;
+        reg[4]=reg[1] + valor1;
 }
 
 void jp(int codop, int op1, int op2, int RAM[], int reg[])
@@ -666,7 +673,7 @@ void jp(int codop, int op1, int op2, int RAM[], int reg[])
 
     valor1=devuelveValor((codop>>8)&0xff, op1, RAM, reg);
     if(abs(reg[9]>>31)==0)
-        reg[4]=valor1;
+        reg[4]=reg[1] + valor1;
 }
 
 void JN(int codop, int op1, int op2, int RAM[], int reg[])
@@ -675,7 +682,7 @@ void JN(int codop, int op1, int op2, int RAM[], int reg[])
 
     valor1=devuelveValor((codop>>8)&0xff, op1, RAM, reg);
     if(abs(reg[9]>>31) == 1)
-        reg[4]= valor1;
+        reg[4]= reg[1] + valor1;
 }
 
 void jnz(int codop, int op1, int op2, int RAM[], int reg[])
@@ -684,7 +691,7 @@ void jnz(int codop, int op1, int op2, int RAM[], int reg[])
 
     valor1=devuelveValor((codop>>8)&0xff, op1, RAM, reg);
     if(abs(reg[9]&0x1) == 0)
-        reg[4]= valor1;
+        reg[4]= reg[1] + valor1;
 }
 
 void jnp(int codop, int op1, int op2, int RAM[], int reg[])
@@ -693,7 +700,7 @@ void jnp(int codop, int op1, int op2, int RAM[], int reg[])
 
     valor1=devuelveValor((codop>>8)&0xff, op1, RAM, reg);
     if((abs(reg[9]>>31) != 0) || ((reg[9]&0x0000001)==1))
-        reg[4]= valor1;
+        reg[4]= reg[1] + valor1;
 }
 
 void jnn(int codop, int op1, int op2, int RAM[], int reg[])
@@ -702,7 +709,7 @@ void jnn(int codop, int op1, int op2, int RAM[], int reg[])
 
     valor1=devuelveValor((codop>>8)&0xff, op1, RAM, reg);
     if(abs(reg[9]>>31) != 1)
-        reg[4]= valor1;
+        reg[4]= reg[1] + valor1;
 }
 
 void sys(int codop, int op1, int op2, int RAM[], int reg[])
@@ -894,6 +901,7 @@ void sys(int codop, int op1, int op2, int RAM[], int reg[])
 void stop(int codop, int op1, int op2, int RAM[], int reg[])
 {
     RAM[0]=RAM[1];
+    reg[4]=reg[2];
 }
 
 void diccionario()
