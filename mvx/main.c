@@ -59,7 +59,6 @@ int main(int argc, char *argv[])
     diccionario();
     cantFlag=argc-RAM[0]-1;
     activaBooleanos(argc,argv,cantFlag,&a,&b,&c,&d);
-    //imprimeReg();
     if (c)
         system("cls");
     ejecuta(a,b,c, d,&procEj);
@@ -156,8 +155,7 @@ void imprimeReg(){
 
 void ejecuta(int a,int b,int c, int d,int *procEj)
 {
-    int instruccion, op1, op2,i, cont=0;
-    char aux;
+    int instruccion, op1, op2,i;
 
     while (RAM[1] < RAM[0]){
 
@@ -183,11 +181,8 @@ void ejecuta(int a,int b,int c, int d,int *procEj)
             else{
                 if ((instruccion>>16)==143) //es STOP, es decir, el proceso finaliza correctamente
                     (*procEj)++;
-                //printf("ip: %d\n", reg[4]);
                 reg[4] += 3;
                 funciones[instruccion >> 16](instruccion, op1, op2, RAM, reg);
-                //printf("%d\n",cont++);
-                //scanf(" %c", &aux);
             }
         }
         for(i=0;i<16;i++)
