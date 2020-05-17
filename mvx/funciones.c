@@ -17,7 +17,12 @@ int devuelveValor(int Top, int op, int RAM[], int reg[]){
             segMemoria= op >>28;
             regInd= op & 0xf;
             valor= (op >> 4) & 0xffffff;
-            op = RAM[reg[segMemoria]+reg[regInd]+valor];
+            if(valor > 8192)
+                op = RAM[reg[segMemoria]+reg[regInd]+valor];
+            else{
+                valor= -1*(op >> 4) & 0xffffff;
+                op = RAM[reg[segMemoria]+reg[regInd]-valor];
+            }
         }
     }
     return op;
@@ -27,7 +32,7 @@ void push(int codop, int op1, int op2, int RAM[], int reg[])
 {
     if (reg[6] != 0){ //puedo poner en la pila
         reg[6]--;
-        RAM[reg[5]+reg[6]]=devuelveValor((codop>>4)&0xf,op1,RAM,reg);
+        RAM[reg[5]+reg[6]]=devuelveValor((codop>>8)&0xf,op1,RAM,reg);
     }
     else{
         printf("Error: pila llena");
@@ -40,13 +45,17 @@ void pop(int codop, int op1, int op2, int RAM[], int reg[])
     int segMemoria,Top1;
     if (reg[5]+reg[6]<reg[1]+reg[0]){ // puedo sacar de la pila
         segMemoria= op1>>28;
-        Top1=(codop>>4)&0xf;
+        Top1=(codop>>8)&0xf;
         if(Top1 == 1)
             reg[op1] = RAM[reg[5]+reg[6]];
         else if (Top1 == 2)
             RAM[reg[segMemoria]+(op1 & 0xfffffff)] = RAM[reg[5]+reg[6]];
-        else
-            RAM[reg[segMemoria] + ((op1>>4) & 0xffffff)+ reg[op1&0xf]] = RAM[reg[5]+reg[6]];
+        else{
+            if(((op1>>4) & 0xffffff) <8192)
+                RAM[reg[segMemoria] + ((op1>>4) & 0xffffff)+ reg[op1&0xf]] = RAM[reg[5]+reg[6]];
+            else
+                RAM[reg[segMemoria] - (-1*(op1>>4) & 0xffffff)+ reg[op1&0xf]] = RAM[reg[5]+reg[6]];
+        }
         reg[6]++;
     }
     else{
@@ -65,7 +74,7 @@ void call(int codop, int op1, int op2, int RAM[], int reg[])
         printf("Error: pila llena");
         stop(0,0,0,RAM,reg);
     }
-    reg[4]=devuelveValor((codop>>4)&0xf,op1,RAM,reg);
+    reg[4]=devuelveValor((codop>>8)&0xf,op1,RAM,reg);
 }
 
 void ret(int codop, int op1, int op2, int RAM[], int reg[])
@@ -86,19 +95,27 @@ void slen(int codop, int op1, int op2, int RAM[], int reg[])
     codRegBase2=op2>>28;
     if ((codop&0xf)==2) //si el operando 2 es directo
         pos=reg[codRegBase2]+(op2 & 0xfffffff);
-    else
-        pos=reg[codRegBase2]+((op2>>4)&0xffffff)+reg[op2&0xf];
+    else{
+            if(((op1>>4) & 0xffffff) <8192)
+                pos=reg[codRegBase2] + ((op2>>4) & 0xffffff)+ reg[op2&0xf];
+            else
+                pos=reg[codRegBase2] - (-1*(op2>>4) & 0xffffff)+ reg[op2&0xf];
+        }
     while (RAM[pos]){
             cont++;
             pos++;
         }
-    int Top1=(codop>>4)&0xf;
+    int Top1=(codop>>8)&0xf;
     if (Top1==1) // si el operando 1 es registro
         reg[op1]=cont;
     else if (Top1==2) // si el operando 1 es directo
         RAM[reg[op1>>28]+(op1 & 0xfffffff)]=cont;
-    else
-        RAM[reg[op1>>28]+(op1 & 0xfffffff)+reg[op1&0xf]]=cont;
+    else{
+            if(((op1>>4) & 0xffffff) <8192)
+                RAM[reg[op1>>28] + ((op1>>4) & 0xffffff)+ reg[op1&0xf]] = cont;
+            else
+                RAM[reg[op1>>28] - (-1*(op1>>4) & 0xffffff)+ reg[op1&0xf]] = cont;
+        }
 }
 
 void smov(int codop, int op1, int op2, int RAM[], int reg[])
@@ -106,12 +123,16 @@ void smov(int codop, int op1, int op2, int RAM[], int reg[])
     int codRegBase1,codRegBase2,Top1,Top2,pos1,pos2;
     codRegBase1=op1>>28;
     codRegBase2=op2>>28;
-    Top1=(codop>>4)&0xf;
+    Top1=(codop>>8)&0xf;
     Top2=codop&0xf;
     if (Top2 == 2)
-        pos2=reg[codRegBase2]+(op2&0xfffffff);
-    else
-        pos2=reg[codRegBase2]+((op2>>4)&0xffffff)+reg[op2&0xf];
+        pos2=RAM[reg[codRegBase2]+(op2&0xfffffff)];
+    else{
+            if(((op1>>4) & 0xffffff) <8192)
+                pos2=reg[codRegBase2] + ((op2>>4) & 0xffffff)+ reg[op2&0xf];
+            else
+                pos2=reg[codRegBase2] - (-1*(op2>>4) & 0xffffff)+ reg[op2&0xf];
+        }
     if (Top1 == 2)
         pos1=reg[codRegBase1]+(op1&0xfffffff);
     else
@@ -128,16 +149,24 @@ void scmp(int codop, int op1, int op2, int RAM[], int reg[])
     int codRegBase1,codRegBase2,Top1,Top2,pos1,pos2,resta;
     codRegBase1=op1>>28;
     codRegBase2=op2>>28;
-    Top1=(codop>>4)&0xf;
+    Top1=(codop>>8)&0xf;
     Top2=codop&0xf;
     if (Top2 == 2)
         pos2=reg[codRegBase2]+(op2&0xfffffff);
-    else
-        pos2=reg[codRegBase2]+((op2>>4)&0xffffff)+reg[op2&0xf];
+    else{
+            if(((op1>>4) & 0xffffff) <8192)
+                pos2=reg[codRegBase2] + ((op2>>4) & 0xffffff)+ reg[op2&0xf];
+            else
+                pos2=reg[codRegBase2] - (-1*(op2>>4) & 0xffffff)+ reg[op2&0xf];
+        }
     if (Top1 == 2)
         pos1=reg[codRegBase1]+(op1&0xfffffff);
-    else
-        pos1=reg[codRegBase1]+((op1>>4)&0xffffff)+reg[op1&0xf];
+    else{
+            if(((op1>>4) & 0xffffff) <8192)
+                pos1=reg[codRegBase2] + ((op2>>4) & 0xffffff)+ reg[op2&0xf];
+            else
+                pos1=reg[codRegBase2] - (-1*(op2>>4) & 0xffffff)+ reg[op2&0xf];
+        }
     do {
         resta=RAM[pos1]-RAM[pos2];
         if(resta == 0) // modifico el registro CC
@@ -160,13 +189,17 @@ void mov(int codop, int op1, int op2, int RAM[], int reg[])
     int segMemoria, Top1;
 
     segMemoria = op1 >> 28;
-    Top1=(codop>>4)&0xf;
+    Top1=(codop>>8)&0xf;
     if (Top1 == 1)
         reg[op1]= devuelveValor(codop&0xff, op2, RAM, reg);
     else if (Top1 == 2)
         RAM[reg[segMemoria] + (op1 & 0xfffffff)] = devuelveValor(codop&0xff, op2, RAM, reg);
-    else
-        RAM[reg[segMemoria] + ((op1>>4) & 0xffffff)+ reg[op1&0xf]] = devuelveValor(codop&0xff, op2, RAM, reg);
+    else{
+        if(((op1>>4) & 0xffffff) <8192)
+            RAM[reg[segMemoria] + ((op1>>4) & 0xffffff)+ reg[op1&0xf]] = devuelveValor(codop&0xff, op2, RAM, reg);
+        else
+            RAM[reg[segMemoria] - (-1*(op1>>4) & 0xffffff)+ reg[op1&0xf]] = devuelveValor(codop&0xff, op2, RAM, reg);
+    }
 }
 
 void add(int codop, int op1, int op2, int RAM[], int reg[])
@@ -176,13 +209,17 @@ void add(int codop, int op1, int op2, int RAM[], int reg[])
     valor1=devuelveValor((codop>>8)&0xff, op1, RAM, reg);
     valor2=devuelveValor(codop&0xff, op2, RAM, reg);
     segMemoria = op1 >> 28;
-    Top1=(codop>>4)&0xf;
+    Top1=(codop>>8)&0xf;
     if(Top1 == 1)
         reg[op1] = valor1 + valor2;
     else if (Top1 == 2)
         RAM[reg[segMemoria]+(op1 & 0xfffffff)] = valor1 + valor2;
-    else
-        RAM[reg[segMemoria] + ((op1>>4) & 0xffffff)+ reg[op1&0xf]] = valor1 + valor2;
+    else{
+        if(((op1>>4) & 0xffffff) <8192)
+            RAM[reg[segMemoria] + ((op1>>4) & 0xffffff)+ reg[op1&0xf]] = valor1+valor2;
+        else
+            RAM[reg[segMemoria] - (-1*(op1>>4) & 0xffffff)+ reg[op1&0xf]] = valor1+valor2;
+    }
     if((valor1 + valor2) == 0)
         reg[9]= 1;
     else{
@@ -202,13 +239,17 @@ void sub(int codop, int op1, int op2, int RAM[], int reg[])
     valor1=devuelveValor((codop>>8)&0xff, op1, RAM, reg);
     valor2=devuelveValor(codop&0xff, op2, RAM, reg);
     segMemoria = op1 >> 28;
-    Top1=(codop>>4)&0xf;
+    Top1=(codop>>8)&0xf;
     if(Top1 == 1)
         reg[op1] = valor1 - valor2;
     else if (Top1 == 2)
         RAM[reg[segMemoria]+(op1 & 0xfffffff)] = valor1 - valor2;
-    else
-        RAM[reg[segMemoria] + ((op1>>4) & 0xffffff)+ reg[op1&0xf]] = valor1 - valor2;
+    else{
+        if(((op1>>4) & 0xffffff) <8192)
+            RAM[reg[segMemoria] + ((op1>>4) & 0xffffff)+ reg[op1&0xf]] = valor1 - valor2;
+        else
+            RAM[reg[segMemoria] - (-1*(op1>>4) & 0xffffff)+ reg[op1&0xf]] = valor1 - valor2;
+    }
     if((valor1 - valor2) == 0)
         reg[9]= 1;
     else{
@@ -228,13 +269,17 @@ void mul(int codop, int op1, int op2, int RAM[], int reg[])
     valor1=devuelveValor((codop>>8)&0xff, op1, RAM, reg);
     valor2=devuelveValor(codop&0xff, op2, RAM, reg);
     segMemoria = op1 >> 28;
-    Top1=(codop>>4)&0xf;
+    Top1=(codop>>8)&0xf;
     if(Top1 == 1)
         reg[op1] = valor1 * valor2;
     else if (Top1 == 2)
         RAM[reg[segMemoria]+(op1 & 0xfffffff)] = valor1 * valor2;
-    else
-        RAM[reg[segMemoria] + ((op1>>4) & 0xffffff)+ reg[op1&0xf]] = valor1 * valor2;
+    else{
+        if(((op1>>4) & 0xffffff) <8192)
+            RAM[reg[segMemoria] + ((op1>>4) & 0xffffff)+ reg[op1&0xf]] = valor1 * valor2;
+        else
+            RAM[reg[segMemoria] - (-1*(op1>>4) & 0xffffff)+ reg[op1&0xf]] = valor1 * valor2;
+    }
     if((valor1 * valor2) == 0)
         reg[9]= 1;
     else{
@@ -255,13 +300,17 @@ void DIV(int codop, int op1, int op2, int RAM[], int reg[])
     valor2=devuelveValor(codop&0xff, op2, RAM, reg);
     segMemoria = op1 >> 28;
     if(valor2 != 0){
-        Top1=(codop>>4)&0xf;
+        Top1=(codop>>8)&0xf;
         if(Top1 == 1)
             reg[op1] = valor1 / valor2;
         else if (Top1 == 2)
             RAM[reg[segMemoria]+(op1 & 0xfffffff)] = valor1 / valor2;
-        else
+        else{
+        if(((op1>>4) & 0xffffff) <8192)
             RAM[reg[segMemoria] + ((op1>>4) & 0xffffff)+ reg[op1&0xf]] = valor1 / valor2;
+        else
+            RAM[reg[segMemoria] - (-1*(op1>>4) & 0xffffff)+ reg[op1&0xf]] = valor1 / valor2;
+    }
         if((valor1 / valor2) == 0)
             reg[9]= 1;
         else{
@@ -283,13 +332,17 @@ void mod(int codop, int op1, int op2, int RAM[], int reg[])
     valor2=devuelveValor(codop&0xff, op2, RAM, reg);
     segMemoria = op1 >> 28;
     if(valor2 != 0){
-        Top1=(codop>>4)&0xf;
+        Top1=(codop>>8)&0xf;
         if(Top1 == 1)
             reg[op1] = valor1 % valor2;
         else if (Top1 == 2)
             RAM[reg[segMemoria]+(op1 & 0xfffffff)] = valor1 % valor2;
-        else
-            RAM[reg[segMemoria] + ((op1>>4) & 0xffffff)+ reg[op1&0xf]] = valor1 % valor2;
+        else{
+            if(((op1>>4) & 0xffffff) <8192)
+                RAM[reg[segMemoria] + ((op1>>4) & 0xffffff)+ reg[op1&0xf]] = valor1 % valor2;
+            else
+                RAM[reg[segMemoria] - (-1*(op1>>4) & 0xffffff)+ reg[op1&0xf]] = valor1 % valor2;
+        }
         if((valor1 / valor2) == 0)
             reg[9]= 1;
         else{
@@ -330,20 +383,28 @@ void SWAP(int codop, int op1, int op2, int RAM[], int reg[])
         valor2=devuelveValor(codop&0xff, op2, RAM, reg);
         segMemoria1=op1>>28;
         segMemoria2=op2>>28;
-        Top1=(codop>>4)&0xf;
+        Top1=(codop>>8)&0xf;
         if(Top1 == 1)
             reg[op1] = valor2;
         else if (Top1 == 2)
             RAM[reg[segMemoria1]+(op1 & 0xfffffff)] = valor2;
-        else
+        else{
+        if(((op1>>4) & 0xffffff) <8192)
             RAM[reg[segMemoria1] + ((op1>>4) & 0xffffff)+ reg[op1&0xf]] = valor2;
+        else
+            RAM[reg[segMemoria1] - (-1*(op1>>4) & 0xffffff)+ reg[op1&0xf]] = valor2;
+    }
         Top2=codop&0xf;
         if(Top2 == 1)
             reg[op2] = valor1;
         else if (Top2 == 2)
             RAM[reg[segMemoria2]+(op2 & 0xfffffff)] = valor1;
-        else
-            RAM[reg[segMemoria2] + ((op2>>4) & 0xffffff)+ reg[op2&0xf]] = valor1;
+        else{
+            if(((op1>>4) & 0xffffff) <8192)
+                RAM[reg[segMemoria2] + ((op1>>4) & 0xffffff)+ reg[op1&0xf]] = valor1;
+            else
+                RAM[reg[segMemoria2] - (-1*(op1>>4) & 0xffffff)+ reg[op1&0xf]] = valor1;
+        }
     }
 }
 
@@ -353,13 +414,17 @@ void rnd(int codop, int op1, int op2, int RAM[], int reg[])
 
     valor2=devuelveValor(codop&0xff, op2, RAM, reg);
     segMemoria1= op1 >> 28;
-    Top1=(codop>>4)&0xf;
+    Top1=(codop>>8)&0xf;
     if(Top1 == 1) /*BUSCAMOS UN NUMEOR RANDOM ENTRE 0 Y EL VALOR DEL OP2 */
         reg[op1] = rand() % (valor2+1);
     else if (Top1 == 2)
         RAM[reg[segMemoria1]+(op1 & 0xfffffff)] = rand() % (valor2+1);
-    else
-        RAM[reg[segMemoria1] + ((op1>>4) & 0xffffff)+ reg[op1&0xf]] = rand() % (valor2+1);
+    else{
+        if(((op1>>4) & 0xffffff) <8192)
+            RAM[reg[segMemoria1] + ((op1>>4) & 0xffffff)+ reg[op1&0xf]] = rand() %(valor2+1);
+        else
+            RAM[reg[segMemoria1] - (-1*(op1>>4) & 0xffffff)+ reg[op1&0xf]] = rand() % (valor2 + 1);
+    }
 }
 
 void and(int codop, int op1, int op2, int RAM[], int reg[])
@@ -369,13 +434,17 @@ void and(int codop, int op1, int op2, int RAM[], int reg[])
     valor1=devuelveValor((codop>>8)&0xff, op1, RAM, reg);
     valor2=devuelveValor(codop&0xff, op2, RAM, reg);
     segMemoria1= op1 >> 28;
-    Top1=(codop>>4)&0xf;
+    Top1=(codop>>8)&0xf;
     if(Top1 == 1)
         reg[op1] = valor1 & valor2;
     else if (Top1 == 2)
         RAM[reg[segMemoria1]+(op1 & 0xfffffff)] = valor1 & valor2;
-    else
-        RAM[reg[segMemoria1] + ((op1>>4) & 0xffffff)+ reg[op1&0xf]] = valor1 & valor2;
+    else{
+        if(((op1>>4) & 0xffffff) <8192)
+            RAM[reg[segMemoria1] + ((op1>>4) & 0xffffff)+ reg[op1&0xf]] = valor1 & valor2;
+        else
+            RAM[reg[segMemoria1] - (-1*(op1>>4) & 0xffffff)+ reg[op1&0xf]] = valor1 & valor2;
+    }
     if((valor1&valor2) == 0) /* MODIFICO EL REGISTRO CC */
         reg[9]= 1;
     else{
@@ -395,13 +464,17 @@ void or(int codop, int op1, int op2, int RAM[], int reg[])
     valor1=devuelveValor((codop>>8)&0xff, op1, RAM, reg);
     valor2=devuelveValor(codop&0xff, op2, RAM, reg);
     segMemoria1= op1 >> 28;
-    Top1=(codop>>4)&0xf;
+    Top1=(codop>>8)&0xf;
     if(Top1 == 1)
         reg[op1] = valor1 | valor2;
     else if (Top1 == 2)
         RAM[reg[segMemoria1]+(op1 & 0xfffffff)] = valor1 | valor2;
-    else
-        RAM[reg[segMemoria1] + ((op1>>4) & 0xffffff)+ reg[op1&0xf]] = valor1 | valor2;
+    else{
+        if(((op1>>4) & 0xffffff) <8192)
+            RAM[reg[segMemoria1] + ((op1>>4) & 0xffffff)+ reg[op1&0xf]] = valor1 | valor2;
+        else
+            RAM[reg[segMemoria1] - (-1*(op1>>4) & 0xffffff)+ reg[op1&0xf]] = valor1 | valor2;
+    }
     if((valor1|valor2) == 0) /* MODIFICO EL REGISTRO CC */
         reg[9]= 1;
     else{
@@ -420,13 +493,17 @@ void not(int codop, int op1, int op2, int RAM[], int reg[])
 
     valor1=devuelveValor((codop>>8)&0xff, op1, RAM, reg);
     segMemoria1= op1 >> 28;
-    Top1=(codop>>4)&0xf;
+    Top1=(codop>>8)&0xf;
     if(Top1 == 1)
         reg[op1] = ~valor1;
     else if (Top1 == 2)
         RAM[reg[segMemoria1]+(op1 & 0xfffffff)] = ~valor1;
-    else
-        RAM[reg[segMemoria1] + ((op1>>4) & 0xffffff)+ reg[op1&0xf]] = ~valor1;
+    else{
+        if(((op1>>4) & 0xffffff) <8192)
+            RAM[reg[segMemoria1] + ((op1>>4) & 0xffffff)+ reg[op1&0xf]] = ~valor1;
+        else
+            RAM[reg[segMemoria1] - (-1*(op1>>4) & 0xffffff)+ reg[op1&0xf]] = ~valor1;
+    }
     if((~valor1) == 0)  /* MODIFICO EL REGISTRO CC */
         reg[9]= 1;
     else{
@@ -446,13 +523,17 @@ void xor(int codop, int op1, int op2, int RAM[], int reg[])
     valor1=devuelveValor((codop>>8)&0xff, op1, RAM, reg);
     valor2=devuelveValor(codop&0xff, op2, RAM, reg);
     segMemoria=op1 >> 28;
-    Top1=(codop>>4)&0xf;
+    Top1=(codop>>8)&0xf;
     if(Top1 == 1)
         reg[op1] = valor1 ^ valor2;
     else if (Top1 == 2)
         RAM[reg[segMemoria]+(op1 & 0xfffffff)] = valor1 ^ valor2;
-    else
-        RAM[reg[segMemoria] + ((op1>>4) & 0xffffff)+ reg[op1&0xf]] = valor1 ^ valor2;
+    else{
+        if(((op1>>4) & 0xffffff) <8192)
+            RAM[reg[segMemoria] + ((op1>>4) & 0xffffff)+ reg[op1&0xf]] = valor1 ^ valor2;
+        else
+            RAM[reg[segMemoria] - (-1*(op1>>4) & 0xffffff)+ reg[op1&0xf]] = valor1 ^ valor2;
+    }
     if((valor1 ^ valor2) == 0)
         reg[9]=1;
     else{
@@ -472,13 +553,17 @@ void shl(int codop, int op1, int op2, int RAM[], int reg[])
     valor1= devuelveValor((codop>>8)&0xff, op1, RAM, reg);
     segMemoria1= op1>>28;
     valor2= devuelveValor(codop&0xff, op2, RAM, reg);
-    Top1=(codop>>4)&0xf;
+    Top1=(codop>>8)&0xf;
     if(Top1 == 1)
         reg[op1] = valor1 << valor2;
     else if (Top1 == 2)
         RAM[reg[segMemoria1]+(op1 & 0xfffffff)] = valor1 << valor2;
-    else
-        RAM[reg[segMemoria1] + ((op1>>4) & 0xffffff)+ reg[op1&0xf]] = valor1 << valor2;
+    else{
+        if(((op1>>4) & 0xffffff) <8192)
+            RAM[reg[segMemoria1] + ((op1>>4) & 0xffffff)+ reg[op1&0xf]] = valor1 << valor2;
+        else
+            RAM[reg[segMemoria1] - (-1*(op1>>4) & 0xffffff)+ reg[op1&0xf]] = valor1 << valor2;
+    }
     if((valor1 << valor2)== 0)
         reg[9]=1;
     else{
@@ -502,13 +587,17 @@ void shr(int codop, int op1, int op2, int RAM[], int reg[])
         pot*=2;
     }
     segMemoria=op1>>28;
-    Top1=(codop>>4)&0xf;
+    Top1=(codop>>8)&0xf;
     if(Top1 == 1)
         reg[op1] = (valor1 >> valor2)&auxi;
     else if (Top1 == 2)
         RAM[reg[segMemoria]+(op1 & 0xfffffff)] = (valor1 >> valor2)&auxi;
-    else
-        RAM[reg[segMemoria] + ((op1>>4) & 0xffffff)+ reg[op1&0xf]] = (valor1 >> valor2)&auxi;
+    else{
+        if(((op1>>4) & 0xffffff) <8192)
+            RAM[reg[segMemoria] + ((op1>>4) & 0xffffff)+ reg[op1&0xf]] = (valor1 >> valor2)&auxi;
+        else
+            RAM[reg[segMemoria] - (-1*(op1>>4) & 0xffffff)+ reg[op1&0xf]] = (valor1 >> valor2)&auxi;
+    }
     if(((valor1>>valor2)&auxi)==0)
         reg[9]=1;
     else{

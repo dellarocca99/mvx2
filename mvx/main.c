@@ -14,7 +14,7 @@ void flagD();
 void flagA();
 void flagB();
 void BuscaImprime(int instr, int op1, int op2);
-void activaBooleanos(int argc,char *argv[],int cantFlag,int a,int b,int c,int d);
+void activaBooleanos(int argc,char *argv[],int cantFlag,int *a,int *b,int *c,int *d);
 int main(int argc, char *argv[])
 {
     int cantFlag;
@@ -58,11 +58,12 @@ int main(int argc, char *argv[])
     cargaMemoria(argc, argv);
     diccionario();
     cantFlag=argc-RAM[0]-1;
-    activaBooleanos(argc,argv,cantFlag,a,b,c,d);
+    activaBooleanos(argc,argv,cantFlag,&a,&b,&c,&d);
     //imprimeReg();
     if (c)
         system("cls");
     ejecuta(a,b,c, d);
+    printf("chau");
     if (a)
         flagA();
     return 0;
@@ -70,18 +71,18 @@ int main(int argc, char *argv[])
 
 void cargaMemoria(int argc, char *argv[]){
     int aux, swapped;
-    int i,j=1,cantImg=0,PSacum;
+    int i,j,cantImg=0,PSacum;
     FILE *arch;
 
     // calculo cantidad de imagenes
-    while (argv[1+cantImg][0]!='-')
+    while (cantImg<(argc-1) && argv[1+cantImg][0]!='-')
             cantImg++;
-        RAM[0]=cantImg;
-        RAM[1]=0;
+    RAM[0]=cantImg;
+    RAM[1]=0;
 
     // guardo en memoria los registros de todos los .img
     for(j=0;j<cantImg;j++){
-        if ((arch=fopen(argv[1], "rb"))==NULL)
+        if ((arch=fopen(argv[j+1], "rb"))==NULL)
             printf("el archivo no se encontro");
         else
             {
@@ -117,17 +118,17 @@ void cargaMemoria(int argc, char *argv[]){
                 RAM[j*16+2+5]+=RAM[j*16+2+1];
     }
 
-
     // si CS_n+PS_n>8192, no alcanza la memoria y se lanza el mensaje "memoria insuficiente"
     if (RAM[(cantImg-1)*16+2+1]+RAM[(cantImg-1)*16+2+0] <= 8192){
         // guardo en memoria los code segment de cada uno de los procesos en las respectivas posiciones
         for(j=0;j<cantImg;j++){
-            if ((arch=fopen(argv[1], "rb"))==NULL)
+            if ((arch=fopen(argv[j+1], "rb"))==NULL)
                 printf("el archivo no se encontro");
             else
                 {
-                fread(&aux,sizeof(int),16,arch);
-                for (i=RAM[j*16+2+1];i<RAM[j*16+2+1];i++){ // desde el valor del registro CS hasta el valor del registro DS guardo las instrucciones
+                for(i=0; i<16; i++)
+                    fread(&aux,sizeof(int),1,arch);
+                for (i=RAM[j*16+2+1];i<RAM[j*16+2+2];i++){ // desde el valor del registro CS hasta el valor del registro DS guardo las instrucciones
                     fread(&aux,sizeof(int),1,arch);
                     swapped = ((aux>>24)&0xff) |
                             ((aux<<8)&0xff0000) |
@@ -192,18 +193,18 @@ void ejecuta(int a,int b,int c, int d)
     }
 }
 
-void activaBooleanos(int argc,char *argv[],int cantFlag,int a,int b,int c,int d)
+void activaBooleanos(int argc,char *argv[],int cantFlag,int *a,int *b,int *c,int *d)
 {
     int i;
     for(i=argc-cantFlag;i<argc;i++){
         if(argv[i][1] == 'a')
-            a=1;
+            *a=1;
         else if(argv[i][1] == 'b')
-            b=1;
+            *b=1;
         else if(argv[i][1] == 'c')
-            c=1;
+            *c=1;
         else if(argv[i][1] == 'd')
-            d=1;
+            *d=1;
     }
 }
 
@@ -231,11 +232,11 @@ void flagD()
         op1=RAM[ip+1];
         op2=RAM[ip+2];
         if(ip == (reg[4]))
-            printf(">[%04x %04x] \t %04x %04x %04x %04x %04x %04x \t",
-               ip>>16, ip&0x0000FFFF, instruccion>>16, instruccion&0x0000FFFF, op1>>16, op1&0x0000FFFF, (op2&0xffff0000)>>16, op2&0x0000FFFF);
+            printf(">[%04d] \t %04x %04x %04x %04x %04x %04x \t",
+               ip, instruccion>>16, instruccion&0x0000FFFF, op1>>16, op1&0x0000FFFF, (op2&0xffff0000)>>16, op2&0x0000FFFF);
         else
-            printf(" [%04x %04x] \t %04x %04x %04x %04x %04x %04x \t",
-               ip>>16, ip&0x0000FFFF, instruccion>>16, instruccion&0x0000FFFF, op1>>16, op1&0x0000FFFF, (op2&0xffff0000)>>16, op2&0x0000FFFF);
+            printf(" [%04d] \t %04x %04x %04x %04x %04x %04x \t",
+               ip, instruccion>>16, instruccion&0x0000FFFF, op1>>16, op1&0x0000FFFF, (op2&0xffff0000)>>16, op2&0x0000FFFF);
         ip+=3;
         BuscaImprime(instruccion, op1, op2);
     }
@@ -254,27 +255,43 @@ void BuscaImprime(int instr, int op1, int op2)
     mnemo= instr>>16;
     printf("%s \t", mnemonicos[mnemo]);
     if(mnemo != 0x8f){
-        if(((instr>>8)&0xff)==1)
+        if(((instr>>8)&0xff)==1) // ES DE TIPO REGISTRO
             printf("%s", registros[op1]);
         else{
-            if(((instr>>8)&0xff)==2){
+            if(((instr>>8)&0xff)==2){ // ES DE TIPO DIRECTO
                 segMemoria=op1>>28;
                 printf("[%s:%d]", registros[segMemoria], op1&0xfffffff);
             }
             else{
-                printf("%d", op1);
+                if(((instr>>8)&0xff)==3){ // ES DE TIPO INDIRECTO
+                    segMemoria=op1>>28;
+                    if(((op1>>4)&0xffffff) > 8192)
+                        printf("[%s: %s-%d]", registros[segMemoria], registros[op1&0xf],-1*(op1>>4)&0xffffff);
+                    else
+                        printf("[%s: %s+%d]", registros[segMemoria], registros[op1&0xf],(op1>>4)&0xffffff);
+                }
+                else
+                    printf("%d", op1);
             }
         }
         if((mnemo!=0x33)&&(mnemo!=0x20)&&(mnemo!=0x24)&&(mnemo!=0x25)&&(mnemo!=0x26)&&(mnemo!=0x27)
-        &&(mnemo!=0x28)&&(mnemo!=0x29)&&(mnemo!=0x81)){
+        &&(mnemo!=0x28)&&(mnemo!=0x29)&&(mnemo!=0x81)&&(mnemo!=0x50)&&(mnemo!=0x51)&&(mnemo!=0x53)){
             if((instr&0xff)==0)
                 printf(", %d", op2);
             else{
                 if((instr&0xff)==1)
                     printf(", %s", registros[op2]);
                 else{
-                    segMemoria=op2>>28;
-                    printf(", [%s:%d]", registros[segMemoria], op2&0xfffffff);
+                    if((instr&0xff)==2){
+                        segMemoria=op2>>28;
+                        printf(", [%s:%d]", registros[segMemoria], op2&0xfffffff);
+                    }else{
+                        segMemoria=op2>>28;
+                        if(((op2>>4)&0xffffff) > 8192)
+                            printf(", [%s: %s-%d]", registros[segMemoria], registros[op2&0xf],-1*(op2>>4)&0xffffff);
+                        else
+                            printf(", [%s: %s+%d]", registros[segMemoria], registros[op2&0xf],(op2>>4)&0xffffff);
+                    }
                 }
             }
         }
