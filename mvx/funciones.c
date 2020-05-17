@@ -36,7 +36,7 @@ void push(int codop, int op1, int op2, int RAM[], int reg[])
     }
     else{
         printf("Error: pila llena");
-        printf("me colgue por push");
+        RAM[1]=RAM[0];
         stop(0,0,0,RAM,reg);
     }
 }
@@ -61,6 +61,7 @@ void pop(int codop, int op1, int op2, int RAM[], int reg[])
     }
     else{
         printf("Error: pila vacia");
+        RAM[1]=RAM[0];
         stop(0,0,0,RAM,reg);
     }
 }
@@ -75,9 +76,8 @@ void call(int codop, int op1, int op2, int RAM[], int reg[])
     }
     else{
         printf("Error: pila llena");
-        printf("me colgue por call");
+        RAM[1]=RAM[0];
         stop(0,0,0,RAM,reg);
-
     }
 
 }
@@ -90,6 +90,7 @@ void ret(int codop, int op1, int op2, int RAM[], int reg[])
     }
     else{
         printf("Error: pila vacia");
+        stop(0,0,0,RAM,reg);
         stop(0,0,0,RAM,reg);
     }
 }
@@ -327,8 +328,10 @@ void DIV(int codop, int op1, int op2, int RAM[], int reg[])
                 reg[9]= 0;
         }
     }
-    else
+    else{
+        RAM[1]=RAM[0];
         stop(0,0,0,RAM,reg);
+    }
 }
 
 void mod(int codop, int op1, int op2, int RAM[], int reg[])
@@ -361,8 +364,10 @@ void mod(int codop, int op1, int op2, int RAM[], int reg[])
                 reg[9]= 0;
         }
     }
-    else
+    else{
+        RAM[1]=RAM[0];
         stop(0,0,0,RAM,reg);
+    }
 }
 
 void cmp(int codop, int op1, int op2, int RAM[], int reg[])
