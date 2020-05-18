@@ -90,7 +90,7 @@ void ret(int codop, int op1, int op2, int RAM[], int reg[])
     }
     else{
         printf("Error: pila vacia\n");
-        stop(0,0,0,RAM,reg);
+        RAM[1]=RAM[0];
         stop(0,0,0,RAM,reg);
     }
 }

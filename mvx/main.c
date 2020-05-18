@@ -58,6 +58,7 @@ int main(int argc, char *argv[])
     cargaMemoria(argc, argv);
     diccionario();
     cantFlag=argc-RAM[0]-1;
+    printf("%d  espacio  %d\n", cantFlag,RAM[0]);
     activaBooleanos(argc,argv,cantFlag,&a,&b,&c,&d);
     if (c)
         system("cls");
@@ -82,8 +83,7 @@ void cargaMemoria(int argc, char *argv[]){
     for(j=0;j<cantImg;j++){
         if ((arch=fopen(argv[j+1], "rb"))==NULL)
             printf("el archivo no se encontro");
-        else
-            {
+        else{
             for (i=0;i<16;i++){
                 fread(&aux,sizeof(int),1,arch);
                 swapped = ((aux>>24)&0xff) |
@@ -93,12 +93,12 @@ void cargaMemoria(int argc, char *argv[]){
                 RAM[j*16+2+i]=swapped;
             }
             fclose(arch);
-            }
+        }
     }
 
     // recalculo los registros CS
+    PSacum=0;
     for(j=0;j<cantImg;j++){
-            PSacum=0;
             RAM[j*16+2+1]=cantImg*16+2+PSacum; // CS_n=CS_1+...+PS_(n-1)+PS_n
             PSacum+=RAM[j*16+2];
     }
@@ -222,10 +222,10 @@ void flagA(int procEj)
 
 void flagD()
 {
-    int instruccion, op1, op2, ip=reg[1], i, j;
+    int instruccion, op1, op2, ip=reg[1], j;
 
     printf("\n");
-    while(ip < reg[2]){
+    while(ip < reg[2] && (RAM[ip]>>16) != 0){
         instruccion= RAM[ip];
         op1=RAM[ip+1];
         op2=RAM[ip+2];
@@ -239,11 +239,8 @@ void flagD()
         BuscaImprime(instruccion, op1, op2);
     }
     printf("Registros:\n");
-    for(i=0;i<RAM[0];i++){
-        for(j=0;j<16;j+=4)
+    for(j=0;j<16;j+=4)
             printf("%s = %10d | %s = %10d | %s = %10d | %s = %10d |\n",registros[j],reg[j],registros[j+1],reg[j+1],registros[j+2],reg[j+2],registros[j+3],reg[j+3]);
-        printf("\n");
-    }
 }
 
 void BuscaImprime(int instr, int op1, int op2)
