@@ -59,7 +59,6 @@ int main(int argc, char *argv[])
     cargaMemoria(argc, argv);
     diccionario();
     cantFlag=argc-RAM[0]-1;
-    printf("%d  espacio  %d\n", cantFlag,RAM[0]);
     activaBooleanos(argc,argv,cantFlag,&a,&b,&c,&d);
     if (c)
         system("cls");
@@ -261,7 +260,7 @@ void BuscaImprime(int instr, int op1, int op2)
             else{
                 if(((instr>>8)&0xff)==3){ // ES DE TIPO INDIRECTO
                     segMemoria=op1>>28;
-                    if(((op1>>4)&0xffffff) > 8192)
+                    if(((op1>>27)&0x1) == 1)
                         printf("[%s: %s-%d]", registros[segMemoria], registros[op1&0xf],-1*(op1>>4)&0xffffff);
                     else
                         printf("[%s: %s+%d]", registros[segMemoria], registros[op1&0xf],(op1>>4)&0xffffff);
@@ -291,7 +290,7 @@ void BuscaImprime(int instr, int op1, int op2)
                         printf(", [%s:%d]", registros[segMemoria], op2&0xfffffff);
                     }else{
                         segMemoria=op2>>28;
-                        if(((op2>>4)&0xffffff) > 8192)
+                        if(((op2>>27)&0x1) == 1)
                             printf(", [%s: %s-%d]", registros[segMemoria], registros[op2&0xf],-1*(op2>>4)&0xffffff);
                         else
                             printf(", [%s: %s+%d]", registros[segMemoria], registros[op2&0xf],(op2>>4)&0xffffff);
@@ -329,7 +328,7 @@ void flagB()
                 b+=(s[j]-48)*aux;
             }
         }
-        printf("%d %d %d \n", cantNum,a,b);
+
         if(cantNum == 1){
             printf("[%04d]: %04x %04x ", a, RAM[a]>>16, RAM[a]&0xffff);
             if(RAM[a]>=32 && RAM[a]<=126)
