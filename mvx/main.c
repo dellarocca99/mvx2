@@ -14,6 +14,7 @@ void flagD();
 void flagA(int procEj);
 void flagB();
 void BuscaImprime(int instr, int op1, int op2);
+int potencia(int base,int exp);
 void activaBooleanos(int argc,char *argv[],int cantFlag,int *a,int *b,int *c,int *d);
 int main(int argc, char *argv[])
 {
@@ -308,27 +309,28 @@ void flagB()
     int a=0, b=0, i=0,j,iant,aux,cantNum=0;
     char s[10];
     printf("[%03d] cmd: ", ((reg[4]-reg[1])/3)+1);
-    scanf("%s", s);
-    if (s[0]){
-        while (s[i] != 32 && s[i])
+    fflush(stdin);
+    fgets(s,10,stdin);
+    if (s[0] != 10){
+        while (s[i] != 32 && s[i] !=10)
             i++;
         for(j=i-1;j>=0;j--){
-            aux=(int)pow(10,(i-1-j));
-            a+=(s[i-1]-48)*aux;
+            aux=potencia(10,(i-1-j));
+            a+=(s[j]-48)*aux;
         }
         cantNum++;
         if (s[i] == 32){
             cantNum++;
             i++;
             iant=i;
-            while (s[i])
+            while (s[i] != 10 && s[i] != 0)
                 i++;
             for(j=i-1;j>=iant;j--){
-                aux=(int)pow(10,(i-1-j));
-                b+=(s[i-1]-48)*aux;
+                aux=potencia(10,(i-1-j));
+                b+=(s[j]-48)*aux;
             }
         }
-
+        printf("%d %d %d \n", cantNum,a,b);
         if(cantNum == 1){
             printf("[%04d]: %04x %04x ", a, RAM[a]>>16, RAM[a]&0xffff);
             if(RAM[a]>=32 && RAM[a]<=126)
@@ -350,5 +352,17 @@ void flagB()
             }
         }
         flagB();
+    }
+}
+
+int potencia(int base,int exp)
+{
+    int i,acum=1;
+    if (exp == 0)
+        return 1;
+    else {
+        for(i=1;i<=exp;i++)
+            acum*=base;
+    return acum;
     }
 }
