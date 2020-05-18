@@ -131,7 +131,9 @@ void smov(int codop, int op1, int op2, int RAM[], int reg[])
     codRegBase2=op2>>28;
     Top1=(codop>>8)&0xf;
     Top2=codop&0xf;
-    if (Top2 == 2)
+    if (Top2 == 0)
+        pos2=op2;
+    else if (Top2 == 2)
         pos2=reg[codRegBase2]+(op2&0xfffffff);
     else{
             if(((op1>>27)&0x1) == 0)
@@ -139,7 +141,9 @@ void smov(int codop, int op1, int op2, int RAM[], int reg[])
             else
                 pos2=reg[codRegBase2] - (-1*(op2>>4) & 0xffffff)+ reg[op2&0xf];
         }
-    if (Top1 == 2)
+    if (Top1 == 0)
+        pos1=op1;
+    else if (Top1 == 2)
         pos1=reg[codRegBase1]+(op1&0xfffffff);
     else
         pos1=reg[codRegBase1]+((op1>>4)&0xffffff)+reg[op1&0xf];
@@ -846,7 +850,12 @@ void sys(int codop, int op1, int op2, int RAM[], int reg[])
             pos=reg[reg[11]]+reg[13];
             if (((reg[10]>>12)&0x1) == 0)
                 printf("[%d]: ", pos);
-            scanf("%s", s);
+            fflush(stdin);
+            gets(s);
+            i=0;
+            while (s[i] != 10)
+                i++;
+            s[i]=0;
             for (i=0;i<strlen(s);i++){
                 RAM[pos]=s[i];
                 pos++;
