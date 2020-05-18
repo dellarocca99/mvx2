@@ -132,7 +132,7 @@ void smov(int codop, int op1, int op2, int RAM[], int reg[])
     Top1=(codop>>8)&0xf;
     Top2=codop&0xf;
     if (Top2 == 2)
-        pos2=RAM[reg[codRegBase2]+(op2&0xfffffff)];
+        pos2=reg[codRegBase2]+(op2&0xfffffff);
     else{
             if(((op1>>4) & 0xffffff) <8192)
                 pos2=reg[codRegBase2] + ((op2>>4) & 0xffffff)+ reg[op2&0xf];
@@ -755,11 +755,12 @@ void sys(int codop, int op1, int op2, int RAM[], int reg[])
             if(ax[12]==0)
                 printf("[%04d]: ", (reg[2]+reg[13]));
             fflush(stdin);
-            scanf("%[^\n]", c);
-            while((i<reg[12]) && (c[i]!=0)){
+            fgets(c, reg[12]+1, stdin);
+            while((i<reg[12]) && (c[i]!=10)){
                 RAM[reg[2]+reg[13]+i] = c[i];
                 i++;
             }
+            RAM[reg[2]+reg[13]+i]=0;
            // if((i<reg[12]))
            //     RAM[reg[2]+reg[13]+i] = 0;
         }

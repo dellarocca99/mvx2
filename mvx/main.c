@@ -275,8 +275,7 @@ void BuscaImprime(int instr, int op1, int op2)
             }
         }
         if((mnemo!=0x33)&&(mnemo!=0x20)&&(mnemo!=0x24)&&(mnemo!=0x25)&&(mnemo!=0x26)&&(mnemo!=0x27)
-        &&(mnemo!=0x28)&&(mnemo!=0x29)&&(mnemo!=0x81)&&(mnemo!=0x50)&&(mnemo!=0x51)&&(mnemo!=0x53)
-           &&(mnemo!=0x40)&&(mnemo!=0x44)&&(mnemo!=0x45)){
+        &&(mnemo!=0x28)&&(mnemo!=0x29)&&(mnemo!=0x81)&&(mnemo!=0x40)&&(mnemo!=0x44)&&(mnemo!=0x45)){
             if((instr&0xff)==0){
                 if((mnemo==0x21)||(mnemo==0x22)||(mnemo==0x23))
                     printf(", %d", reg[1]+op2);
