@@ -164,12 +164,12 @@ void ejecuta(int a,int b,int c, int d,int *procEj)
         reg[4]=reg[1];
         if(d)
             flagD();
-        while((reg[4] >= 0) && (reg[4] < reg[2])){
+        while(reg[4] < reg[2] && (RAM[reg[4]]>>16) != 0){
             instruccion = RAM[reg[4]];
             op1=RAM[reg[4]+1];
             op2=RAM[reg[4]+2];
-            if (instruccion == 0x81 && op1 == 0){ // SYS 0 implica breakpoint
-               reg[4]+=3;
+            if (instruccion>>16 == 0x81 && op1 == 0){ // SYS 0 implica breakpoint
+                reg[4]+=3;
                 if (c)
                     system("cls");
                 if(b){
@@ -229,7 +229,7 @@ void flagD()
         instruccion= RAM[ip];
         op1=RAM[ip+1];
         op2=RAM[ip+2];
-        if(ip == (reg[4]))
+        if(ip == (reg[4])-3)
             printf(">[%04d] \t %04x %04x %04x %04x %04x %04x \t",
                ip, instruccion>>16, instruccion&0x0000FFFF, op1>>16, op1&0x0000FFFF, (op2&0xffff0000)>>16, op2&0x0000FFFF);
         else
