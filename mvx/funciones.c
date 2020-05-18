@@ -755,7 +755,7 @@ void sys(int codop, int op1, int op2, int RAM[], int reg[])
             if(ax[12]==0)
                 printf("[%04d]: ", (reg[2]+reg[13]));
             fflush(stdin);
-            scanf("%[^\n]", c);
+            scanf("%[^\n]s", c);
             while((i<reg[12]) && (c[i]!=0)){
                 RAM[reg[2]+reg[13]+i] = c[i];
                 i++;

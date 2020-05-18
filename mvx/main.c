@@ -308,7 +308,8 @@ void flagB()
     int a=0, b=0, i=0,j,iant,aux,cantNum=0;
     char s[10];
     printf("[%03d] cmd: ", ((reg[4]-reg[1])/3)+1);
-    scanf("%s", s);
+    fflush(stdin);
+    scanf("%[^\n]s", s);
     if (s[0]){
         while (s[i] != 32 && s[i])
             i++;
@@ -328,7 +329,7 @@ void flagB()
                 b+=(s[i-1]-48)*aux;
             }
         }
-
+        printf("cantNumeros: %d, a:%d, b:%d\n", cantNum, a, b);
         if(cantNum == 1){
             printf("[%04d]: %04x %04x ", a, RAM[a]>>16, RAM[a]&0xffff);
             if(RAM[a]>=32 && RAM[a]<=126)
