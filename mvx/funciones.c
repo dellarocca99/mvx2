@@ -727,7 +727,7 @@ void jnn(int codop, int op1, int op2, int RAM[], int reg[])
 
 void sys(int codop, int op1, int op2, int RAM[], int reg[])
 {
-    int valor1, i,pos, aux=reg[10];
+    int valor1, j,i,pos, aux=reg[10];
     int ax[16];
     char c[reg[12]+1], por='%',s[50];
 
@@ -851,12 +851,12 @@ void sys(int codop, int op1, int op2, int RAM[], int reg[])
             if (((reg[10]>>12)&0x1) == 0)
                 printf("[%d]: ", pos);
             fflush(stdin);
-            gets(s);
+            fgets(s, 100, stdin);
             i=0;
-            while (s[i] != 10)
+            while (s[i] != 10 && s[i] != 0 && s[i] != 13)
                 i++;
             s[i]=0;
-            for (i=0;i<strlen(s);i++){
+            for (i=0;i<=strlen(s);i++){
                 RAM[pos]=s[i];
                 pos++;
             }
