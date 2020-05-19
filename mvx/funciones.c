@@ -685,7 +685,7 @@ void jp(int codop, int op1, int op2, int RAM[], int reg[])
     int valor1;
 
     valor1=devuelveValor((codop>>8)&0xff, op1, RAM, reg);
-    if(abs(reg[9]>>31)==0)
+    if(abs(reg[9]>>31)==0 && (reg[9] & 0x1) == 0)
         reg[4]=reg[1] + valor1;
 }
 
@@ -727,7 +727,7 @@ void jnn(int codop, int op1, int op2, int RAM[], int reg[])
 
 void sys(int codop, int op1, int op2, int RAM[], int reg[])
 {
-    int valor1, j,i,pos, aux=reg[10];
+    int valor1, i,pos, aux=reg[10];
     int ax[16];
     char c[reg[12]+1], por='%',s[50];
 
